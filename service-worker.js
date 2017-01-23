@@ -5,8 +5,7 @@ var filesToCache = [
   '/scripts/app.js',
   '/scripts/localforage.min.js',
   '/scripts/main.js',
-  '/scripts/vue.js',
-  '/images/smiley.svg'
+  '/scripts/vue.js'
 ];
 
 self.addEventListener('install', function(event) {
