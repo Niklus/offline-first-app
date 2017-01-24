@@ -50,6 +50,9 @@
       input{
         margin-top: 5px;
       }
+      img{
+        width: 30%;
+      }
   </style>
   </head>
   <body>
@@ -60,24 +63,47 @@
       </header>
       <hr>
       <main>
+        
+       
         <section>
           <h2>Categories</h2>
-          <input type="text" placeholder="Search"> 
-          <li v-for="category in categories">
-            <button v-on:click="getSources" v-bind:id="category.type">{{ category.type }}</button>
-          </li>
+          <ul>
+            <li v-for="category in categories">
+              <button v-on:click="getHeadlines" v-bind:id="category">{{ category }}</button>
+            </li>
+          </ul>
         </section>
         
         <hr>
 
-        <section>
+        <section><!--If u need to reuse, make a component off this section-->
           <h2>Headlines</h2>
-          <li v-for="obj in results">
-            {{obj.description}}<br>
-            {{obj.publishedAt}}
-            <hr>
-          </li>
+          <ul>
+            <li v-for="obj1 in results">
+                <img v-bind:id="obj1.source" v-bind:src="getIcons(obj1.source)" v-bind:alt="obj1.source"><!--Render conditinally-->
+                <h3>{{obj1.sortBy}} headlines</h3>
+              <ul>
+                <li v-for="obj2 in obj1.articles" >     
+                  <img v-bind:src="obj2.urlToImage">
+                  <!--if offline conditionally use blob and greyout links-->
+                  <br>
+                    <h4>{{obj2.title}}</h4>
+                  <br>
+                  <a v-bind:href="obj2.url">  
+                    {{obj2.description}} <!--find a way to indicate its a link-->
+                  </a>
+                  <br>
+                    {{obj2.publishedAt}}   
+                  <hr><!--End of list-->
+                </li>
+              </ul>
+            </li>
+          </ul>  
+            
         </section>
+
+        <hr>
+
         <section>
           <h2>My Sources</h2>
           <!-- Clickable Images and buttons from idb-->
