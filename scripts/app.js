@@ -23,8 +23,12 @@ var app = new Vue({
 		color: 'color:#e33',
 		
 		key: 'f6448decf20240cda23e0d6d98d31e9c',
-		
-		categories: [ // ability to add categories
+
+		sources: 'https://newsapi.org/v1/sources?',
+
+		articles: 'https://newsapi.org/v1/articles?',
+
+		categories: [ 
 			'all',
 			'business',
 			'gaming',
@@ -46,18 +50,18 @@ var app = new Vue({
             }
 		}],
 
-
-		currentCategory: '',
+		timer: [] //Limit nmber of requests- timer oject maybe
 	},
 
 	methods: {
 
-		setIcons: function(){
+		setIcons: function(ctgry){
 
 			var imgs = this.imgs;
 			var self = this;
+			self.logos.length = 0;
 
-			sourceStore.getItem(this.currentCategory)
+			sourceStore.getItem(ctgry)
 			.then(function(value) {		
   				value.sources.forEach(function(obj){
                     
@@ -66,8 +70,7 @@ var app = new Vue({
                     self.logos.push({
                     	id: id,
                     	size: obj.urlsToLogos
-                    });
- 
+                    });          
   				});
   			});	
 		},
@@ -83,38 +86,43 @@ var app = new Vue({
 			}
 		},
 
-		getImages: function(id){
-
-			console.log(this.imgs.id)
-		},
-
-		updateSources: function(){
-			// User can update sources whilst online
-			// run getSources iregadless of idb and (update idb)
-		},
-
 		getHeadlines: function(event){ 
-
-			if (!navigator.onLine) {
-				console.log('offline');
-                 //Define offline behvior
-                 //Set categories
-                 //what to fetch e.t.c
-				//use idb
-				return;
-			}
-
-			//var lng: en, de, fr;
+             
+            //var lng: en, de, fr;
 			//var ctry: au, de, gb, in, it, us;
             var ctgry;
             var url;
+
+			if (!navigator.onLine) { // And timer
+				//console.log('offline');
+
+				var ctgry = event.target.id;
+				var self = this;
+
+				articleStore.getItem(ctgry).then(function(value) {
+
+					if(value){
+						self.results.length = 0; 
+						self.results = value;
+					}else{
+						console.log('No Savings Bro!')
+					}
+				});
+
+
+                //Define offline behvior
+                //Set categories
+                //what to fetch e.t.c
+				//use idb
+				return;
+			}
         
 			if(event.target.id == 'all'){
 			    ctgry = event.target.id;
-				url = 'https://newsapi.org/v1/sources?&apiKey='+this.key;
+				url = this.sources+'&apiKey='+this.key;
 			}else{   
 				ctgry = event.target.id;
-			    url = 'https://newsapi.org/v1/sources?&category='+ctgry+'&apiKey='+this.key;
+			    url = this.sources+'&apiKey='+this.key+'&category='+ctgry;
 			}
 
 
@@ -123,75 +131,91 @@ var app = new Vue({
             //Or if idb has data
             //if idb empty and offline save current results to idb -just incase :)
             
+           
             var self = this;
 
-  			sourceStore.getItem(ctgry).then(function(value) {
-  				
+	    	sourceStore.getItem(ctgry).then(function(value) {
+				
   				if(!value){
   					self.fetchSource(url, ctgry)
+
   				}else{
-  					value.sources.forEach(function(obj){
-						self.getArticles(obj.id); //if a category returns null refresh sources/ delete category
-					});
+                    self.makeRequests(value, ctgry)
   				}
-	  			
   			});
+	    	  
+		},
+  		
 
-
-  			this.currentCategory = ctgry;
-  			this.setIcons(); 
-        },
-
-        fetchSource:function(url, ctgry){
+        fetchSource: function(url, ctgry){
             
             var self = this; // Learn how to use call, apply and bind
 
 			fetch(url, {
+
 				method: 'get'
 			}).then(function(res){
+
 				return res.json();
 			}).then(function(res){
 
-				sourceStore.setItem(ctgry, res);
-				console.log(ctgry + " saved!");
-
-			    res.sources.forEach(function(obj){
+				sourceStore.setItem(ctgry, res).then(function(value) {	
 					
-					self.getArticles(obj.id);
+					console.log(ctgry + " saved!");
+
+					self.makeRequests(value, ctgry);
+
 				});
-
-				 //Next time we dont need to make another request
-                
-                
-
-                //To-do here
-				//Save the array of sources in indexeddb in an object-category 
-			    //for quicker access next time?? e.g object music={sources : res} So we fetch articles directly
-			    //id, name, and image blobs
 			});	
+		},
+
+		makeRequests: function(value, ctgry){
+
+			this.setIcons(ctgry)
+
+			var requests = [];
+			var self = this;
+
+
+        	value.sources.forEach(function(obj){
+
+				var request = self.getArticles(obj.id); 
+
+				requests.push(request);
+			});
+
+			
+
+			Promise.all(requests).then(function(results) {
+
+				articleStore.setItem(ctgry, self.results).then(function(value) {	
+					console.log(ctgry+' articles updated')	
+				});
+			});
 		},
 
 		getArticles: function(source, sortBy){
 
 			if(sortBy) {	
-				var url = 'https://newsapi.org/v1/articles?source='+source+'&sortBy='+sortBy+'&apiKey='+this.key;
+				var url = this.articles+'source='+source+'&sortBy='+sortBy+'&apiKey='+this.key;
 			}else {
-				url = 'https://newsapi.org/v1/articles?source='+source+'&apiKey='+this.key; 
+				url = this.articles+'source='+source+'&apiKey='+this.key; 
 			}
            
 			var self = this;
 
-			fetch(url, { //Cross-browser : if fetch doesnt exist, fallback to xhttp
+			var request = fetch(url, { //Cross-browser : if fetch doesnt exist, fallback to xhttp
 				method: 'get'
 			}).then(function(res){
 				return res.json();
 			}).then(function(res){
-				//console.log(res);
+
 				self.results.push(res);
+				//self.getBlob(res.articles.urlToImage);
 			});
-			
 
-
+			return request;
+		
 			// Push latest data to idb-for a particular category
 			// Diferent datbase from sources, to be accessed when offline
 		},
@@ -222,73 +246,46 @@ var app = new Vue({
 		toggleOffline: function(){
 			this.color = 'color:#e33'
 			this.title = 'offline'
+		},
+
+		init: function(){
+
+			// Onload
+			// Onload: populate with available sources if any, else use general
+			if (navigator.onLine) {
+				//Online Behavior 
+				app.toggleOnline();
+				// Fetch data online -populate with recent headlines based on idb
+				// if no idb sources then get all popular
+			} else {
+				// ofline Behaviour
+				app.toggleOffline();
+			    //Fetch most recent data from indexedDB or saved bookmarks
+				//Links greyed out
+				//Conyent discolored
+			}
+
+			// Online / offline Handlers when switching
+			self.addEventListener('online', function(e) {  
+			    app.toggleOnline();
+			});
+
+			self.addEventListener('offline', function(e) {
+				app.toggleOffline();
+			});
 		}
 	}
 });
 
-
-// Onload
-if (navigator.onLine) {
-	//Online Behavior 
-	app.toggleOnline();
-	// Fetch data online -populate with recent headlines based on idb
-	// if no idb sources then get all popular
-} else {
-	// ofline Behaviour
-	app.toggleOffline();
-    //Fetch most recent data from indexedDB or saved bookmarks
-	//Links greyed out
-	//Conyent discolored
-}
-
-// Online / offline Handlers when switching
-self.addEventListener('online', function(e) {  
-    app.toggleOnline();
-});
-
-self.addEventListener('offline', function(e) {
-	app.toggleOffline();
-});
+app.init();
 
 
 
 //Features
 // Book mark to read later catchup section
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//MAKE BLOBS if possible, link them with their counter part articles and
+//Conditionally render when user is ofline
 
 
 /*
