@@ -41,7 +41,7 @@ var app = new Vue({
 
 		results: [],
 
-		logos: [{
+		logos: [{  //Conside Eliminating these and just display the name (Bandwith saving) Test speed with & without
 			id: '',
             size: {
             	large: '',
@@ -51,11 +51,12 @@ var app = new Vue({
 		}],
 
 		timer: [] //Limit nmber of requests- timer oject maybe
+
 	},
 
 	methods: {
 
-		setIcons: function(ctgry){
+		setLogos: function(ctgry){
 
 			var imgs = this.imgs;
 			var self = this;
@@ -65,17 +66,15 @@ var app = new Vue({
 			.then(function(value) {		
   				value.sources.forEach(function(obj){
                     
-                    var id = obj.id;
-
                     self.logos.push({
-                    	id: id,
+                    	id: obj.id,
                     	size: obj.urlsToLogos
                     });          
   				});
   			});	
 		},
 
-		getIcons: function(id){
+		getLogos: function(id){
 
 			var arr = this.logos;
 
@@ -90,60 +89,50 @@ var app = new Vue({
              
             //var lng: en, de, fr;
 			//var ctry: au, de, gb, in, it, us;
-            var ctgry;
-            var url;
-
-			if (!navigator.onLine) { // And timer
-				//console.log('offline');
-
-				var ctgry = event.target.id;
-				var self = this;
-
-				articleStore.getItem(ctgry).then(function(value) {
-
-					if(value){
-						self.results.length = 0; 
-						self.results = value;
-					}else{
-						console.log('No Savings Bro!')
-					}
-				});
-
-
-                //Define offline behvior
-                //Set categories
-                //what to fetch e.t.c
-				//use idb
-				return;
-			}
-        
-			if(event.target.id == 'all'){
-			    ctgry = event.target.id;
-				url = this.sources+'&apiKey='+this.key;
-			}else{   
-				ctgry = event.target.id;
-			    url = this.sources+'&apiKey='+this.key+'&category='+ctgry;
-			}
-
-
-			this.results.length = 0; 
-			//Clear if online
-            //Or if idb has data
-            //if idb empty and offline save current results to idb -just incase :)
-            
-           
+            var ctgry = event.target.id;
             var self = this;
-
-	    	sourceStore.getItem(ctgry).then(function(value) {
+            
+	    	sourceStore.getItem(ctgry).then(function(sources) {
 				
-  				if(!value){
-  					self.fetchSource(url, ctgry)
+  				if(!sources && navigator.onLine){
 
-  				}else{
-                    self.makeRequests(value, ctgry)
-  				}
+  					var url;
+
+  					//If no sources and online, then fetch
+  					if(ctgry == 'all'){
+						url = self.sources+'&apiKey='+self.key;
+					}else{   
+					    url = self.sources+'&apiKey='+self.key+'&category='+ctgry;
+					}
+
+  					self.fetchSource(url, ctgry);
+
+  				}else if(sources){   //Offline or Online    
+                    
+                    // If we have sources set logos and then get articles from db
+                    self.setLogos(ctgry);
+                    self.getArticlesFromDB(ctgry);
+  				}else{ 
+					
+					//Case: offline and no Sources
+					console.log('No Article Saved'); 
+				}
   			});
 	    	  
+		},
+
+		getArticlesFromDB: function(ctgry){
+
+			var self = this;
+
+			articleStore.getItem(ctgry).then(function(articles) {
+
+				if(articles){
+					self.results.length = 0;
+					self.results = articles;
+					console.log('Serving from iDB');
+				}	
+			});
 		},
   		
 
@@ -159,42 +148,35 @@ var app = new Vue({
 				return res.json();
 			}).then(function(res){
 
-				sourceStore.setItem(ctgry, res).then(function(value) {	
+				sourceStore.setItem(ctgry, res).then(function(source) {	
 					
-					console.log(ctgry + " saved!");
+					console.log(ctgry + " source updated!");
 
-					self.makeRequests(value, ctgry);
-
+					self.setLogos(ctgry)
+					self.results.length = 0;
+					self.getArticles(source, ctgry);
 				});
 			});	
 		},
 
-		makeRequests: function(value, ctgry){
-
-			this.setIcons(ctgry)
+		getArticles: function(source, ctgry){
 
 			var requests = [];
 			var self = this;
 
-
-        	value.sources.forEach(function(obj){
-
-				var request = self.getArticles(obj.id); 
-
+        	source.sources.forEach(function(obj){
+				var request = self.makeRequests(obj.id); 
 				requests.push(request);
 			});
 
-			
-
 			Promise.all(requests).then(function(results) {
-
 				articleStore.setItem(ctgry, self.results).then(function(value) {	
-					console.log(ctgry+' articles updated')	
+					console.log(ctgry+' articles updsted!'); // Save articles once loaded and rendered to user
 				});
 			});
 		},
 
-		getArticles: function(source, sortBy){
+		makeRequests: function(source, sortBy){
 
 			if(sortBy) {	
 				var url = this.articles+'source='+source+'&sortBy='+sortBy+'&apiKey='+this.key;
@@ -209,9 +191,7 @@ var app = new Vue({
 			}).then(function(res){
 				return res.json();
 			}).then(function(res){
-
 				self.results.push(res);
-				//self.getBlob(res.articles.urlToImage);
 			});
 
 			return request;

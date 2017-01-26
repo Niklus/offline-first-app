@@ -1,0 +1,16 @@
+body{
+  background: #e2e1e0;
+}
+li{
+  list-style: none;
+}
+button{
+  display: block;
+  margin-top: 5px;
+}
+input{
+  margin-top: 5px;
+}
+img{
+  width: 30%;
+}

@@ -36,24 +36,7 @@
     <link rel="canonical" href="http://www.example.com/">
     -->
 
-    <style>
-      body{
-        background: #e2e1e0;
-      }
-      li{
-        list-style: none;
-      }
-      button{
-        display: block;
-        margin-top: 5px;
-      }
-      input{
-        margin-top: 5px;
-      }
-      img{
-        width: 30%;
-      }
-  </style>
+    <link rel="stylesheet" type="text/css" href="styles/main.css">
   </head>
   <body>
     <!-- Add your site or app content here -->
@@ -80,7 +63,7 @@
           <h2>Headlines</h2>
           <ul>
             <li v-for="obj1 in results">
-                <img v-bind:id="obj1.source" v-bind:src="getIcons(obj1.source)" v-bind:alt="obj1.source"><!--Render conditinally-->
+                <img v-bind:id="obj1.source" v-bind:src="getLogos(obj1.source)" v-bind:alt="obj1.source"><!--Render conditinally-->
                 <h3>{{obj1.sortBy}} headlines</h3>
               <ul>
                 <li v-for="obj2 in obj1.articles" >     
@@ -89,7 +72,7 @@
                   <br>
                     <h4>{{obj2.title}}</h4>
                   <br>
-                  <a v-bind:href="obj2.url">  
+                  <a v-bind:href="obj2.url" target="object1">  
                     {{obj2.description}} <!--find a way to indicate its a link-->
                   </a>
                   <br>
@@ -100,6 +83,8 @@
             </li>
           </ul>    
         </section>
+
+        <!--v-bind:data="objectUrl-->
 
         <hr>
 
