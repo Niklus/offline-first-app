@@ -2,6 +2,8 @@ var cacheName = 'my-static-cache-v1';
 var filesToCache = [
   '/',
   '/styles/main.css',
+  '/styles/vue-material.css',
+  '/scripts/vue-material.js',
   '/scripts/app.js',
   '/scripts/localforage.min.js',
   '/scripts/main.js',

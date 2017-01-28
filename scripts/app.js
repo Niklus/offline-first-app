@@ -1,43 +1,46 @@
 
-// Init Database
+Vue.use(VueMaterial);
 
-var sourceStore = localforage.createInstance({
-	name: "sources"
+Vue.material.registerTheme('default', {
+  primary: 'blue-grey',
+  accent: 'teal',
+  warn: 'red',
+  background: 'white'
 });
 
-var articleStore = localforage.createInstance({
-	name: "articles"
-});
-
-
-
-// Init App
 var app = new Vue({
 	
 	el: '#app',
 	
-	data: {
+	data: {	
 		
-		title: 'online',  //Use togle icon	
-		
-		color: 'color:#e33',
+		color: '',
 		
 		key: 'f6448decf20240cda23e0d6d98d31e9c',
 
 		sources: 'https://newsapi.org/v1/sources?',
 
+		sourceStore: '',
+
 		articles: 'https://newsapi.org/v1/articles?',
 
+		articleStore: '',
+
 		categories: [ 
-			'all',
-			'business',
-			'gaming',
 			'general',
+			'business',
+			'sport',
+			'technology',
+			'gaming',
 			'music',
-			'science-and-nature',
-      		'sport',
-      		'technology'
-		],
+			'science-and-nature'
+		],// remove 'all' category for now
+
+		lang: '',
+
+		ctry: '',
+
+		sortby: '',
 
 		results: [],
 
@@ -50,49 +53,40 @@ var app = new Vue({
             }
 		}],
 
-		timer: [] //Limit nmber of requests- timer oject maybe
+		timer: [], //Limit nmber of requests- timer oject maybe
+
+		readability: ''
 
 	},
 
 	methods: {
 
-		setLogos: function(ctgry){
-
-			var imgs = this.imgs;
-			var self = this;
-			self.logos.length = 0;
-
-			sourceStore.getItem(ctgry)
-			.then(function(value) {		
-  				value.sources.forEach(function(obj){
-                    
-                    self.logos.push({
-                    	id: obj.id,
-                    	size: obj.urlsToLogos
-                    });          
-  				});
-  			});	
+		setLang: function(e){
+			//var lng: en, de, fr;
 		},
 
-		getLogos: function(id){
-
-			var arr = this.logos;
-
-			for(var i = 0; i<arr.length; i++){
-				if (arr[i].id === id){
-					return arr[i].size.small;
-				}
-			}
-		},
-
-		getHeadlines: function(event){ 
-             
-            //var lng: en, de, fr;
+		setCtry: function(e){
 			//var ctry: au, de, gb, in, it, us;
-            var ctgry = event.target.id;
-            var self = this;
+		},
+
+		sortby: function(e){
+			//var sortby: top, popular, latest e.t.c
+		},
+
+		getCategory: function(e){ 
+             
+            var ctgry = e.target.id;
+
+            console.log(id);
+
+            //this.getHeadlines(ctgry);	  
+		},
+
+		getHeadlines: function(ctgry){
+
+			var self = this;
             
-	    	sourceStore.getItem(ctgry).then(function(sources) {
+	    	self.sourceStore.getItem(ctgry).then(function(sources) {
 				
   				if(!sources && navigator.onLine){
 
@@ -118,14 +112,13 @@ var app = new Vue({
 					console.log('No Article Saved'); 
 				}
   			});
-	    	  
 		},
 
 		getArticlesFromDB: function(ctgry){
 
 			var self = this;
 
-			articleStore.getItem(ctgry).then(function(articles) {
+			self.articleStore.getItem(ctgry).then(function(articles) {
 
 				if(articles){
 					self.results.length = 0;
@@ -148,30 +141,32 @@ var app = new Vue({
 				return res.json();
 			}).then(function(res){
 
-				sourceStore.setItem(ctgry, res).then(function(source) {	
+				self.sourceStore.setItem(ctgry, res).then(function(source) {	
 					
 					console.log(ctgry + " source updated!");
 
 					self.setLogos(ctgry)
 					self.results.length = 0;
-					self.getArticles(source, ctgry);
+					self.fetchArticles(source, ctgry);
 				});
 			});	
 		},
 
-		getArticles: function(source, ctgry){
+		fetchArticles: function(source, ctgry){
 
-			var requests = [];
 			var self = this;
+			var requests = [];
 
         	source.sources.forEach(function(obj){
-				var request = self.makeRequests(obj.id); 
+        		var source = obj.id;
+				var request = self.makeRequests(source); 
 				requests.push(request);
 			});
 
-			Promise.all(requests).then(function(results) {
-				articleStore.setItem(ctgry, self.results).then(function(value) {	
-					console.log(ctgry+' articles updsted!'); // Save articles once loaded and rendered to user
+			Promise.all(requests).then(function(value) {
+	
+				self.articleStore.setItem(ctgry, self.results).then(function(value) {	
+					console.log(ctgry+' articles updated!'); // Save articles once loaded and rendered to user
 				});
 			});
 		},
@@ -200,58 +195,83 @@ var app = new Vue({
 			// Diferent datbase from sources, to be accessed when offline
 		},
 
-		createImage: function(id, blob){
-		    var img = document.getElementById(id);        
-		    img.src = createImageURI(blob);
+		setLogos: function(ctgry){
+
+			var imgs = this.imgs;
+			var self = this;
+			self.logos.length = 0;
+
+			self.sourceStore.getItem(ctgry)
+			.then(function(value) {		
+  				value.sources.forEach(function(obj){
+                    
+                    self.logos.push({
+                    	id: obj.id,
+                    	size: obj.urlsToLogos
+                    });          
+  				});
+  			});	
 		},
 
-		getBlob: function(url){   
-		    fetch(url).then(function(res){
-				return res.blob();
-			}).then(function(blob){
-				console.log(blob); 
-			});	
+		getLogos: function(id){
+
+			var arr = this.logos;
+
+			for(var i = 0; i<arr.length; i++){
+				if (arr[i].id === id){
+					return arr[i].size.small;
+				}
+			}
 		},
 
-		createImageURI: function(blob){
-			var imageURI = window.URL.createObjectURL(blob);          
-			return imageURI;
+		toggleNetwork: function(){
+
+			if (navigator.onLine) {	
+				this.color = 'color:#ccff00';
+				this.readability = 'Read More';		
+			} else {
+				this.color = 'color:#e00001';
+				this.readability = 'Read Later';	
+			}
 		},
 
-		toggleOnline: function(){
-			this.color = 'color:#0da'
-			this.title = 'online'
-		},
+	    toggleLeftSidenav() {
+	      this.$refs.leftSidenav.toggle();
+	    },
 
-		toggleOffline: function(){
-			this.color = 'color:#e33'
-			this.title = 'offline'
-		},
+	    open(ref) {
+	      console.log('Opened: ' + ref);
+	    },
+
+	    close(ref) {
+	      console.log('Closed: ' + ref);
+	    },
 
 		init: function(){
 
-			// Onload
-			// Onload: populate with available sources if any, else use general
-			if (navigator.onLine) {
-				//Online Behavior 
-				app.toggleOnline();
-				// Fetch data online -populate with recent headlines based on idb
-				// if no idb sources then get all popular
-			} else {
-				// ofline Behaviour
-				app.toggleOffline();
-			    //Fetch most recent data from indexedDB or saved bookmarks
-				//Links greyed out
-				//Conyent discolored
-			}
+			// Init Database
 
-			// Online / offline Handlers when switching
-			self.addEventListener('online', function(e) {  
-			    app.toggleOnline();
+			this.sourceStore = localforage.createInstance({
+				name: "sources"
 			});
 
-			self.addEventListener('offline', function(e) {
-				app.toggleOffline();
+			this.articleStore = localforage.createInstance({
+				name: "articles"
+			});
+
+			this.getHeadlines('business');
+
+			this.toggleNetwork();
+
+			var self = this;
+
+			// Online / offline Handlers when switching
+			window.addEventListener('online', function(e) {  
+			    self.toggleNetwork();
+			});
+
+			window.addEventListener('offline', function(e) {
+				self.toggleNetwork();
 			});
 		}
 	}
@@ -261,34 +281,8 @@ app.init();
 
 
 
-//Features
-// Book mark to read later catchup section
-
-//MAKE BLOBS if possible, link them with their counter part articles and
-//Conditionally render when user is ofline
 
 
-/*
-function getArrBuffer(url){
-	fetch(url).then(function(res) {
-		return res.arrayBuffer();
-	}).then(function(aBuffer) {  
-		console.log(aBuffer)
-		//Do something with aBuffer
-	});
-}
 
-function aBufferToBlob(arrBuffer){
-	var blob = new Blob([arrBuffer]);
-	return blob;
-}
 
-function blobToArrayBuffer(blob){
-  var reader = new FileReader();
-  reader.readAsArrayBuffer(blob);
-  reader.addEventListener("loadend", function() {
-    var arrayBuffer = reader.result;
-    console.log(arrayBuffer) // Do Something with aBuffer
-  });  
-}
-*/
+
