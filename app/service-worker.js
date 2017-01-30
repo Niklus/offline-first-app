@@ -1,13 +1,17 @@
-var cacheName = 'my-static-cache-v1';
+var cacheName = 'my-static-cache-1';
 var filesToCache = [
   '/',
-  '/styles/main.css',
-  '/styles/vue-material.css',
-  '/scripts/vue-material.js',
+  '/images/touch/apple-touch-icon.png',
+  '/images/touch/chrome-touch-icon-192x192.png',
+  '/images/touch/icon-128x128.png',
+  '/images/touch/ms-touch-icon-144x144-precomposed.png',
   '/scripts/app.js',
-  '/scripts/localforage.min.js',
   '/scripts/main.js',
-  '/scripts/vue.js'
+  '/scripts/libs/localforage.min.js',
+  '/scripts/libs/vue-material.js',
+  '/scripts/libs/vue.min.js',
+  '/styles/libs/vue-material.css',
+  '/styles/libs/main.css',
 ];
 
 self.addEventListener('install', function(event) {
