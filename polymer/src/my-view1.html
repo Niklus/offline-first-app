@@ -1,0 +1,100 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../bower_components/iron-swipeable-container/iron-swipeable-container.html">
+
+<link rel="import" href="get-headlines.html">
+<dom-module id="my-view1">
+  <template>
+    <style>
+      :host {
+        display: block;
+        padding: 15px;
+      }
+
+      a{
+        text-decoration: none;
+      }
+
+      .card-actions {
+        display: -webkit-flex; /* Safari */
+       -webkit-justify-content: space-around; /* Safari 6.1+ */
+        display: flex;
+        justify-content: space-around;
+      }
+
+      paper-card{
+        margin-top: 10px;
+      }
+
+      .swipe {
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+      cursor: default;
+    }
+    </style>
+
+    <get-headlines
+      id='headlines'
+      results={{results}}
+      logos={{logos}}>
+    </get-headlines>
+
+    <!--Cards need Styling-->
+    <!--Fix swipe -->
+    <template is="dom-repeat" items="{{results}}" initialCount='2'>
+      <template is="dom-repeat" items="{{item.articles}}" initialCount='10'>
+        
+        <!--<iron-swipeable-container>-->
+          <paper-card class="swipe" image="[[item.urlToImage]]" alt="article image">
+            <div class="card-content">
+              <div class="header">
+                <h3>[[item.title]]</h3>
+                <p>[[item.publishedAt]]</p>
+              </div>
+              <p class="description">[[item.description]]</p>
+            </div>
+            <div class="card-actions">
+              <paper-icon-button class="left-align" icon="icons:bookmark"></paper-icon-button>
+              <paper-icon-button class="left-align" icon="social:share"></paper-icon-button>
+              <paper-button>
+                <a href="[[item.url]]">Read More</a>
+              </paper-button>
+            </div>
+          </paper-card>
+        <!--</iron-swipeable-container>-->
+        
+      </template>
+    </template>
+    
+  </template>
+  <script>
+    Polymer({
+      is: 'my-view1'
+    });
+  </script>
+</dom-module>
