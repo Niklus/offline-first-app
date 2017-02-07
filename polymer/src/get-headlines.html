@@ -27,7 +27,6 @@
 
         results: {
           type: Array,
-          value: [],
           notify: true
         },
 
@@ -102,7 +101,7 @@
       // Use element
       fetchSource: function(url, ctgry){
               
-        var self = this; // Learn how to use call, apply and bind
+        var self = this; 
         
         fetch(url, {
           method: 'get'
@@ -133,6 +132,8 @@
         Promise.all(requests).then(function(value) {
           self.articleStore.setItem(ctgry, self.results).then(function(value) { 
             console.log(ctgry+' articles updated!'); // Save articles once loaded and rendered to user
+
+            self.getHeadlines(ctgry); //A work-around --subject to removal. articles must be rendering as soon as they arrive
           });
         });
       },
@@ -152,13 +153,10 @@
         }).then(function(res){
           return res.json();
         }).then(function(res){
-          self.results.push(res);
+          self.results.push(res); // Articles should be rendering from here
         });
 
         return request;
-      
-        // Push latest data to idb-for a particular category
-        // Diferent datbase from sources, to be accessed when offline
       },
 
       setLogos: function(ctgry){
@@ -189,17 +187,6 @@
         }
       },
 
-      toggleNetwork: function(){
-
-        if (navigator.onLine) { 
-          this.color = 'color:#ccff00';
-          this.readability = 'Read More';   
-        } else {
-          this.color = 'color:#e00001';
-          this.readability = 'Read Later';  
-        }
-      },
-
       attached: function(){
 
         // Init Database
@@ -211,20 +198,7 @@
           name: "articles"
         });
 
-        this.getHeadlines('general');
-
-        this.toggleNetwork();
-
-        var self = this;
-
-        // Online / offline Handlers when switching
-        window.addEventListener('online', function(e) {  
-            self.toggleNetwork();
-        });
-
-        window.addEventListener('offline', function(e) {
-          self.toggleNetwork();
-        });
+        //this.getHeadlines('general');
       }
     });
   </script>

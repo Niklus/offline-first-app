@@ -57,7 +57,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       cursor: default;
     }
     </style>
-
+    
+    <!--Needs to render immediately after getting results-->
     <get-headlines
       id='headlines'
       results={{results}}
@@ -66,8 +67,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <!--Cards need Styling-->
     <!--Fix swipe -->
-    <template is="dom-repeat" items="{{results}}" initialCount='2'>
-      <template is="dom-repeat" items="{{item.articles}}" initialCount='10'>
+    <template is="dom-repeat" items="[[results]]" initialCount='2'>
+      <template is="dom-repeat" items="[[item.articles]]" initialCount='10'>
         
         <!--<iron-swipeable-container>-->
           <paper-card class="swipe" image="[[item.urlToImage]]" alt="article image">
@@ -94,7 +95,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
   <script>
     Polymer({
-      is: 'my-view1'
+      is: 'my-view1',
+
+      properties: {
+        results: {
+          type: Array,
+          value: []
+        },
+      },
+
+      ready: function(){
+        this.$.headlines.getHeadlines('business');
+      }
     });
   </script>
 </dom-module>
